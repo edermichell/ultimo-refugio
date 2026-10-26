@@ -1,0 +1,66 @@
+name: Compilar Ultimo Refugio
+
+on:
+  workflow_dispatch:
+    inputs:
+      tipo:
+        description: "Que compilar"
+        type: choice
+        default: prueba
+        options:
+          - prueba        # APK de prueba (sin firma, para instalar en tu Android)
+          - publicar      # AAB y APK firmados (para Google Play)
+
+jobs:
+  compilar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Descomprimir el proyecto
+        run: |
+          unzip -q UltimoRefugio_Android.zip -d proyecto
+          ls proyecto
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.11.1
+
+      - name: Licencias del SDK
+        run: yes | sdkmanager --licenses > /dev/null || true
+
+      - name: APK de prueba
+        if: ${{ inputs.tipo == 'prueba' }}
+        working-directory: proyecto/UltimoRefugio_Android
+        run: gradle --no-daemon assembleDebug
+
+      - name: Subir APK de prueba
+        if: ${{ inputs.tipo == 'prueba' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: UltimoRefugio-prueba-apk
+          path: proyecto/UltimoRefugio_Android/app/build/outputs/apk/debug/*.apk
+
+      - name: AAB y APK firmados
+        if: ${{ inputs.tipo == 'publicar' }}
+        working-directory: proyecto/UltimoRefugio_Android
+        env:
+          KEYSTORE_FILE: ${{ github.workspace }}/upload.jks
+          KEYSTORE_PASS: ${{ secrets.CLAVE }}
+          KEY_ALIAS: upload
+        run: gradle --no-daemon bundleRelease assembleRelease
+
+      - name: Subir AAB y APK firmados
+        if: ${{ inputs.tipo == 'publicar' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: UltimoRefugio-publicar
+          path: |
+            proyecto/UltimoRefugio_Android/app/build/outputs/bundle/release/*.aab
+            proyecto/UltimoRefugio_Android/app/build/outputs/apk/release/*.apk
