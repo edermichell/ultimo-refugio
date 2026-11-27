@@ -8,3 +8,5 @@ Juego de supervivencia zombi en pixel art isométrico. Esta es la edición para 
 - Política de privacidad: https://edermichell.github.io/privacidad/
 
 Archivos: `index.html` (el juego), `manifest.webmanifest`, `sw.js` (caché sin conexión), `icons/` y `capturas/`.
+
+Nota: la carpeta raíz es la edición PC publicada con GitHub Pages; `UltimoRefugio_Android.zip` y `.github/` son el proyecto antiguo de compilación de Android.
